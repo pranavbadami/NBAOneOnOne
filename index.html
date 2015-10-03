@@ -1,0 +1,107 @@
+<!doctype html>
+<html ng-app="nbaOneOnOneApp">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-sanitize.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-select/0.13.1/select.min.css">
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-select/0.13.1/select.min.js"></script>
+    <script src="js/ui-bootstrap-tpls-0.13.4.min.js"></script>
+    <script src="js/controllers.js"></script>
+  </head>
+  <body ng-controller="oneOnOneController">
+    
+    <script type="text/ng-template" id="myModalContent.html">
+        <div class="modal-header">
+            <h3 class="modal-title">Video</h3>
+        </div>
+        <div class="modal-body">
+            <iframe width="100%" style="position: absolute; height: 100%; border: none" ng-src="{{trustAsResourceUrl(shotUrl)}}"></iframe>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+        </div>
+    </script>
+
+
+    <h1 align="center">One On One</h1>
+
+    <div class="container-fluid" ng-hide="eligiblePlayersLoaded">Loading players...</div>
+    <div class="container-fluid" ng-show="eligiblePlayersLoaded">
+      <div class="row">
+        <div class="col-sm-3 col-sm-offset-3">
+          <label>Player 1:</label>
+          <ui-select ng-model="playerOne.selected" theme="bootstrap" reset-search-input="false">
+              <ui-select-match placeholder="Player 1 Name">{{$select.selected.DISPLAY_LAST_COMMA_FIRST}}</ui-select-match>
+              <ui-select-choices repeat="playerOne in searchResultPlayerObjects" refresh="refreshPlayers($select.search)" refresh-delay="0">
+                <div ng-bind-html="playerOne.DISPLAY_LAST_COMMA_FIRST | highlight: $select.search"></div>
+              </ui-select-choices>
+          </ui-select>
+        </div>
+        <div class="col-sm-3">
+          <label>Player 2:</label>
+          <ui-select ng-model="playerTwo.selected" theme="bootstrap" reset-search-input="false">
+              <ui-select-match placeholder="Player 2 Name">{{$select.selected.DISPLAY_LAST_COMMA_FIRST}}</ui-select-match>
+              <ui-select-choices repeat="playerTwo in searchResultPlayerObjects" refresh="refreshPlayers($select.search)" refresh-delay="0">
+                <div ng-bind-html="playerTwo.DISPLAY_LAST_COMMA_FIRST | highlight: $select.search"></div>
+              </ui-select-choices>
+          </ui-select>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row top-buffer">
+        <!-- SPACING ROW -->
+      </div>
+    </div>
+
+    <div class="container-fluid" ng-show="eligiblePlayersLoaded">
+      <div class="row">
+        <div class="col-sm-6 col-sm-offset-3">
+          <button type="button" class="btn btn-primary btn-block" ng-show="playerOne.selected && playerTwo.selected" ng-click="getShots()">Show Plays</button>
+          <button type="button" class="btn btn-primary btn-block disabled" ng-hide="playerOne.selected && playerTwo.selected">Show Plays</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+        <div ng-repeat="(matchup, shots) in shotsVsDefenderGroupedByGame" class="panel panel-default">
+          <div class="panel-heading" role="tab" id="headingOne">
+            <h4 class="panel-title">
+              <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                {{matchup}}
+              </a>
+            </h4>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+            <div class="panel-body">
+              <div class="table-responsive">
+                <table class="table">
+                  <tr>
+                    <td>Period</td>
+                    <td>Game Clock</td>
+                    <td>Shot Value</td>
+                    <td>Result</td>
+                  </tr>
+                  <tr ng-repeat="shot in shots">
+                    <td>{{ shot.PERIOD }}</td>
+                    <td>{{ shot.GAME_CLOCK }}</td>
+                    <td>{{ shot.PTS_TYPE }}</td>
+                    <td> <a href="" ng-click="setShotVideoUrl(shot)">{{ shot.SHOT_RESULT }}</a> </td>
+                  </tr>
+                </table>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+  </body>
+</html>
