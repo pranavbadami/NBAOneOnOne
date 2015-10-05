@@ -261,6 +261,7 @@ nbaOneOnOneApp.controller('oneOnOneController', function ($scope, nbaAPI, $modal
             }
 
             $scope.selectedSeasonType = newVal["selectedSeasonType"];
+            $scope.getShots();
         }
     })
 
