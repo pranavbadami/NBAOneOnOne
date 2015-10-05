@@ -72,13 +72,15 @@
     <div class="container-fluid">
       <div class="row top-buffer">
         <div class="col-sm-3 col-sm-offset-3">
-          <div ng-repeat="(season,selected) in seasons" align="right">
-              <label class="custom-vertical"><input type="checkbox" ng-model="seasons[season]"/> {{season}}</label>
+          <div ng-repeat="(season,selected) in seasons">
+              <label align="right" class="custom-vertical visible-md-block visible-lg-block"><input type="checkbox" ng-model="seasons[season]"/> {{season}}</label>
+              <label align="center" class="visible-xs-block visible-sm-block"><input type="checkbox" ng-model="seasons[season]"/> {{season}}</label>
           </div>
         </div>
         <div class="col-sm-3">
           <div ng-repeat="seasonType in seasonTypes">
-              <label class="custom-vertical"><input type="radio" ng-model="$parent.selectedSeasonType" ng-value="seasonType"> {{seasonType}}</label>
+              <label class="custom-vertical visible-md-block visible-lg-block"><input type="radio" ng-model="$parent.selectedSeasonType" ng-value="seasonType"> {{seasonType}}</label>
+              <label align="center" class="visible-xs-block visible-sm-block"><input type="radio" ng-model="$parent.selectedSeasonType" ng-value="seasonType"> {{seasonType}}</label>
           </div>
         </div>
       </div>
@@ -107,7 +109,8 @@
             <accordion-group ng-repeat="(matchup, shots) in shotsVsDefenderGroupedByGame">
               <accordion-heading>
                 <button class="btn-default">+</button> {{matchup}}
-                {{shots | numberMadeShots}} for {{shots.length}} ({{shots | percentageMadeShots}}%)
+                <div class="visible-md-inline-block visible-lg-inline-block">{{shots | numberMadeShots}} for {{shots.length}} ({{shots | percentageMadeShots}}%)</div>
+                <div class="visible-xs-inline-block visible-sm-inline-block">[{{shots | numberMadeShots}}/{{shots.length}}] ({{shots | percentageMadeShots}}%)</div>
 
               </accordion-heading>
               <span ng-show="isErrorGame(matchup)">Due to inconsistencies in the NBA stat counting, some videos for this game may be incorrect. The vast majority of games do not have any inconsistencies.</span>
