@@ -5,3 +5,9 @@
 div.video-modal-class .modal-body {
     height: 500px;
 }
+
+label .custom-vertical {
+    display: block;
+    padding-left: 15px;
+    text-indent: -15px;
+}

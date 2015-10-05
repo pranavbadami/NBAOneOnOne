@@ -37,8 +37,8 @@
     <div class="container-fluid" ng-show="eligiblePlayersLoaded">
       <div class="row">
         <div class="col-sm-3 col-sm-offset-3">
-          <label>Player 1:</label>
-          <ui-select ng-model="playerOne.selected" theme="bootstrap" reset-search-input="false">
+          <label>Offensive Player:</label>
+          <ui-select ng-model="playerOne.selected" theme="bootstrap" reset-search-input="true">
               <ui-select-match placeholder="Player 1 Name">{{$select.selected.DISPLAY_LAST_COMMA_FIRST}}</ui-select-match>
               <ui-select-choices repeat="playerOne in searchResultPlayerObjects" refresh="refreshPlayers($select.search)" refresh-delay="0">
                 <div ng-bind-html="playerOne.DISPLAY_LAST_COMMA_FIRST | highlight: $select.search"></div>
@@ -46,8 +46,8 @@
           </ui-select>
         </div>
         <div class="col-sm-3">
-          <label>Player 2:</label>
-          <ui-select ng-model="playerTwo.selected" theme="bootstrap" reset-search-input="false">
+          <label>Defensive Player:</label>
+          <ui-select ng-model="playerTwo.selected" theme="bootstrap" reset-search-input="true">
               <ui-select-match placeholder="Player 2 Name">{{$select.selected.DISPLAY_LAST_COMMA_FIRST}}</ui-select-match>
               <ui-select-choices repeat="playerTwo in searchResultPlayerObjects" refresh="refreshPlayers($select.search)" refresh-delay="0">
                 <div ng-bind-html="playerTwo.DISPLAY_LAST_COMMA_FIRST | highlight: $select.search"></div>
@@ -55,22 +55,37 @@
           </ui-select>
         </div>
       </div>
+      
+      <div class="row top-buffer">
+        <div class="col-sm-6 col-sm-offset-3" align="center">
+          <button type="button" class="btn btn-default" ng-click="switchMatchup()" ng-show="playerOne.selected && playerTwo.selected">Switch Matchup</button>
+          <button type="button" class="btn btn-disabled" ng-click="switchMatchup()" ng-hide="playerOne.selected && playerTwo.selected">Switch Matchup</button>
+        </div>
+      </div>
     </div>
 
-    <div class="container">
+    <div class="container-fluid">
       <div class="row top-buffer">
-        <!-- SPACING ROW -->
+        <div class="col-sm-3 col-sm-offset-3">
+          <div ng-repeat="(season,selected) in seasons" align="right">
+              <label class="custom-vertical"><input type="checkbox" ng-model="seasons[season]"/> {{season}}</label>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div ng-repeat="seasonType in seasonTypes">
+              <label class="custom-vertical"><input type="radio" ng-model="$parent.selectedSeasonType" ng-value="seasonType"> {{seasonType}}</label>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="container-fluid" ng-show="eligiblePlayersLoaded">
       <div class="row">
         <div class="col-sm-6 col-sm-offset-3">
-          <button type="button" class="btn btn-primary btn-block" ng-show="playerOne.selected && playerTwo.selected && !shotsLoading && !shotsLoaded" ng-click="getShots()">Show shots</button>
+          <button type="button" class="btn btn-primary btn-block" ng-show="playerOne.selected && playerTwo.selected && verifySeasonSelected() && !shotsLoading && !shotsLoaded" ng-click="getShots()">Show shots</button>
           <button type="button" class="btn btn-primary btn-block disabled" ng-show="playerOne.selected && playerTwo.selected && shotsLoading && !shotsLoaded">Loading shots</button>
-
-          <button type="button" class="btn btn-primary btn-block disabled" ng-hide="playerOne.selected && playerTwo.selected">Show Shots</button>
-          <button type="button" class="btn btn-primary btn-block disabled" ng-show="playerOne.selected && playerTwo.selected && !shotsLoading && shotsLoaded">Show shots</button>
+          <button type="button" class="btn btn-primary btn-block disabled" ng-hide="playerOne.selected && playerTwo.selected && verifySeasonSelected()">Show Shots</button>
+          <button type="button" class="btn btn-primary btn-block disabled" ng-show="playerOne.selected && playerTwo.selected && !shotsLoading && shotsLoaded">{{shotsVsDefender | numberMadeShots}} for {{shotsVsDefender.length}} ({{shotsVsDefender | percentageMadeShots}}%)</button>
         </div>
       </div>
     </div>
@@ -84,7 +99,8 @@
       <div class="row top-buffer">
         <div class="col-sm-6 col-sm-offset-3">
           <accordion>
-            <accordion-group ng-repeat="(matchup, shots) in shotsVsDefenderGroupedByGame" heading="{{matchup}}">
+            <accordion-group ng-repeat="(matchup, shots) in shotsVsDefenderGroupedByGame" heading="{{matchup}}
+            {{shots | numberMadeShots}} for {{shots.length}} ({{shots | percentageMadeShots}}%)">
                <div class="table-responsive">
                   <table class="table">
                     <tr>

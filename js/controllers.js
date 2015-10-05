@@ -36,6 +36,14 @@ nbaOneOnOneApp.service('formatAPIResults', function() {
             })
 
             return eligiblePlayerObjects;
+        },
+
+        settingsToQueryParams: function(paramName, settingsObject, queryParams) {
+            var settingsObjectAsListOfPairs = _.pairs(settingsObject);
+            var filterTrueSettings = _.filter(settingsObjectAsListOfPairs, function(pair) { return pair[1]; })
+            var listQueryParamValues = _.map(filterTrueSettings, _.first);
+            queryParams[paramName] = listQueryParamValues;
+            return queryParams;
         }
 
     };
@@ -46,10 +54,17 @@ nbaOneOnOneApp.service('nbaAPI', function($http, formatAPIResults){
     
     var getterService = {
 
-        getPlayers: function() {
+        getPlayers: function(seasons) {
             var minimumToYear = 2015;
-            var allPlayersUrl = 'http://stats.nba.com/stats/commonallplayers?IsOnlyCurrentSeason=0&LeagueID=00&Season=2015-16&callback=JSON_CALLBACK';
-            var promise = $http.jsonp(allPlayersUrl).then(function(response) {
+            var allPlayersUrl = "http://stats.nba.com/stats/commonallplayers";
+            "?IsOnlyCurrentSeason=0&LeagueID=00&Season=2015-16&callback=JSON_CALLBACK"
+            var requiredParams = {
+                "IsOnlyCurrentSeason":"0",
+                "LeagueID":"00",
+                "callback":"JSON_CALLBACK"
+            }
+            var queryParams = formatAPIResults.settingsToQueryParams("Season", seasons, requiredParams);
+            var promise = $http.jsonp(allPlayersUrl, { "params": queryParams}).then(function(response) {
 
                 var headers = response.data.resultSets[0].headers;
                 var playerList = response.data.resultSets[0].rowSet;
@@ -63,13 +78,34 @@ nbaOneOnOneApp.service('nbaAPI', function($http, formatAPIResults){
             return promise;
         },
 
-        getShotsForPlayers: function(offensivePlayerObject, defensivePlayerObject) {
-            var shotLogUrl = "http://stats.nba.com/stats/playerdashptshotlog?DateFrom=&DateTo="
-            + "&GameSegment=&LastNGames=0&LeagueID=00&Location=&Month=0&OpponentTeamID=0&Outcome="
-            + "&Period=0&Season=2014-15&SeasonSegment=&SeasonType=Regular+Season&TeamID=0"
-            + "&VsConference=&VsDivision=&callback=JSON_CALLBACK&PlayerID=" + offensivePlayerObject.PERSON_ID;
-
-            var promise = $http.jsonp(shotLogUrl).then(function(response) {
+        getShotsForPlayers: function(offensivePlayerObject, defensivePlayerObject, seasons, seasonType) {
+            var shotLogUrl = "http://stats.nba.com/stats/playerdashptshotlog"
+            //  "?DateFrom=&DateTo="
+            // + "&GameSegment=&LastNGames=0&LeagueID=00&Location=&Month=0&OpponentTeamID=0&Outcome="
+            // + "&Period=0&Season=2014-15&SeasonSegment=&SeasonType=Playoffs&TeamID=0"
+            // + "&VsConference=&VsDivision=&callback=JSON_CALLBACK&PlayerID=" + offensivePlayerObject.PERSON_ID;
+           
+            var requiredParams = {
+                "DateFrom":"",
+                "DateTo":"",
+                "GameSegment":"",
+                "LastNGames":"0",
+                "LeagueID":"00",
+                "Location":"",
+                "Month":"0",
+                "OpponentTeamID":"0",
+                "Outcome":"",
+                "Period":"0",
+                "SeasonSegment":"",
+                "TeamID":"0",
+                "callback":"JSON_CALLBACK",
+                "VsConference":"",
+                "VsDivision":"",
+                "PlayerID":offensivePlayerObject.PERSON_ID,
+                "SeasonType":seasonType
+            }
+            var queryParams = formatAPIResults.settingsToQueryParams("Season", seasons, requiredParams);
+            var promise = $http.jsonp(shotLogUrl, { "params": queryParams}).then(function(response) {
                 var headers = response.data.resultSets[0].headers;
                 var shotList = response.data.resultSets[0].rowSet;
                 var shotObjects = formatAPIResults.generateListOfObjects(headers, shotList);
@@ -141,12 +177,19 @@ nbaOneOnOneApp.controller('oneOnOneController', function ($scope, nbaAPI, $modal
         $scope.defensivePlayer = {};
         $scope.gamePlayByPlays = {};
         $scope.shotsLoaded = false;
+        $scope.seasons = {
+            "2014-15": true,
+            "2015-16": true
+        }
+        $scope.selectedSeasonType = "Regular Season";
+        $scope.seasonTypes = ["Regular Season", "Playoffs"];
+
     };
     
     //initialize
     $scope.clear();
     
-    nbaAPI.getPlayers().then(function(result) {
+    nbaAPI.getPlayers($scope.seasons).then(function(result) {
         $scope.eligiblePlayerObjects = result;
         $scope.searchResultPlayerObjects = $scope.eligiblePlayerObjects;
         $scope.eligiblePlayersLoaded = true;
@@ -176,13 +219,20 @@ nbaOneOnOneApp.controller('oneOnOneController', function ($scope, nbaAPI, $modal
         }
     })
 
+    $scope.switchMatchup = function() {
+        $scope.tempPlayerSelected = $scope.playerOne.selected;
+        $scope.playerOne.selected = $scope.playerTwo.selected;
+        $scope.playerTwo.selected = $scope.tempPlayerSelected;
+    }
+
     $scope.getShots = function() {
+
         $scope.shotsLoaded = false;
         $scope.shotsLoading = true;
         $scope.offensivePlayer = $scope.playerOne.selected;
         $scope.defensivePlayer = $scope.playerTwo.selected;
         
-        nbaAPI.getShotsForPlayers($scope.offensivePlayer, $scope.defensivePlayer).then(function(result) {
+        nbaAPI.getShotsForPlayers($scope.offensivePlayer, $scope.defensivePlayer, $scope.seasons, $scope.selectedSeasonType).then(function(result) {
             $scope.shotsVsDefender = _.each(result, function(shot) {
                                         $scope.calculateShotVideoUrl(shot, function(url) {
                                             shot['videoUrl'] = url;
@@ -198,6 +248,20 @@ nbaOneOnOneApp.controller('oneOnOneController', function ($scope, nbaAPI, $modal
         if (newVal) {
             $scope.shotsVsDefenderGroupedByGame = nbaAPI.getShotsForPlayersGroupedByGame($scope.shotsVsDefender);
         }
+    })
+
+    $scope.$watch('seasons', function() {
+        $scope.shotsLoaded = false;
+    }, true);
+
+    $scope.verifySeasonSelected = function() {
+        var seasonKeyValuePairs = _.pairs($scope.seasons);
+        var selectedSeasons = _.filter(seasonKeyValuePairs, function(pair) { return pair[1]; })
+        return selectedSeasons.length
+    }
+
+    $scope.$watch('selectedSeasonType', function() {
+        $scope.shotsLoaded = false;
     })
 
     $scope.calculateShotVideoUrl = function(shot, setShotAttrCallback) {
@@ -236,12 +300,37 @@ nbaOneOnOneApp.filter('fieldGoalsForGame', function() {
     }
 })
 
+nbaOneOnOneApp.filter('numberMadeShots', function() {
+    return function(shots) {
+        var madeShots = 0;
+        _.each(shots, function(shot) {
+            if (shot.SHOT_RESULT == 'made')
+                madeShots++;
+        })
+        return madeShots;
+    }
+})
+
+nbaOneOnOneApp.filter('percentageMadeShots', function() {
+    return function(shots) {
+        if (shots) {
+            if (shots.length) {
+                var totalShots = shots.length;
+                var madeShots = 0;
+                _.each(shots, function(shot) {
+                    if (shot.SHOT_RESULT == 'made')
+                        madeShots++;
+                })
+                return Math.round(madeShots/totalShots*100);
+            }
+            else return 0;
+        }
+        else return 0;
+    }
+})
+
 nbaOneOnOneApp.controller('ModalInstanceCtrl', function ($scope, $modalInstance, $sce, iFrameUrl) {
-
   $scope.iFrameUrl = iFrameUrl;
-  console.log("in modal scope shot url", $scope.shotUrl);
-  // document.getElementById('videoIFrame').src = $scope.shotUrl;
-
   $scope.trustAsResourceUrl = $sce.trustAsResourceUrl;
 
   $scope.cancel = function () {
