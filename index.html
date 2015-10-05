@@ -110,7 +110,8 @@
               <accordion-heading>
                 <button class="btn-default">+</button> {{matchup}}
                 <div class="visible-md-inline-block visible-lg-inline-block">{{shots | numberMadeShots}} for {{shots.length}} ({{shots | percentageMadeShots}}%)</div>
-                <div class="visible-xs-inline-block visible-sm-inline-block">[{{shots | numberMadeShots}}/{{shots.length}}] ({{shots | percentageMadeShots}}%)</div>
+                <div class="visible-sm-inline-block">[{{shots | numberMadeShots}}/{{shots.length}}] ({{shots | percentageMadeShots}}%)</div>
+                <div class="visible-xs-inline-block">[{{shots | numberMadeShots}}/{{shots.length}}]</div>
 
               </accordion-heading>
               <span ng-show="isErrorGame(matchup)">Due to inconsistencies in the NBA stat counting, some videos for this game may be incorrect. The vast majority of games do not have any inconsistencies.</span>
