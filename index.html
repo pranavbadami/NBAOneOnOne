@@ -21,7 +21,7 @@
             <h3 class="modal-title">Video</h3>
         </div>
         <div class="modal-body">
-            <iframe width="100%" style="position: absolute; height: 100%; border: none" ng-src="{{trustAsResourceUrl(shotUrl)}}"></iframe>  
+            <iframe width="100%" style="position: absolute; height: 100%; border: none" ng-src="{{trustAsResourceUrl(iFrameUrl)}}"></iframe>  
         </div>
         <div class="modal-footer">
             <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
@@ -31,7 +31,9 @@
 
     <h1 align="center">One On One</h1>
 
-    <div class="container-fluid" ng-hide="eligiblePlayersLoaded">Loading players...</div>
+    <div class="container-fluid" ng-hide="eligiblePlayersLoaded">
+      <h3 align="center">Loading players...</h3>
+    </div>
     <div class="container-fluid" ng-show="eligiblePlayersLoaded">
       <div class="row">
         <div class="col-sm-3 col-sm-offset-3">
@@ -64,13 +66,21 @@
     <div class="container-fluid" ng-show="eligiblePlayersLoaded">
       <div class="row">
         <div class="col-sm-6 col-sm-offset-3">
-          <button type="button" class="btn btn-primary btn-block" ng-show="playerOne.selected && playerTwo.selected" ng-click="getShots()">Show Plays</button>
-          <button type="button" class="btn btn-primary btn-block disabled" ng-hide="playerOne.selected && playerTwo.selected">Show Plays</button>
+          <button type="button" class="btn btn-primary btn-block" ng-show="playerOne.selected && playerTwo.selected && !shotsLoading && !shotsLoaded" ng-click="getShots()">Show shots</button>
+          <button type="button" class="btn btn-primary btn-block disabled" ng-show="playerOne.selected && playerTwo.selected && shotsLoading && !shotsLoaded">Loading shots</button>
+
+          <button type="button" class="btn btn-primary btn-block disabled" ng-hide="playerOne.selected && playerTwo.selected">Show Shots</button>
+          <button type="button" class="btn btn-primary btn-block disabled" ng-show="playerOne.selected && playerTwo.selected && !shotsLoading && shotsLoaded">Show shots</button>
         </div>
       </div>
     </div>
 
-    <div class="container-fluid">
+    <div ng-show="shotsLoaded" class="container-fluid">
+      <div class="row top-buffer" ng-hide="shotsVsDefender.length">
+        <h3 align="center">No shots found :/</h3>
+        <h5 align="center">Players at the same position work best</h5>
+      </div>
+
       <div class="row top-buffer">
         <div class="col-sm-6 col-sm-offset-3">
           <accordion>
@@ -78,18 +88,20 @@
                <div class="table-responsive">
                   <table class="table">
                     <tr>
-                      <td>Period</td>
-                      <td>Game Clock</td>
-                      <td>Shot Value</td>
-                      <td>Distance (ft)</td>
-                      <td>Result</td>
+                      <td><b>Period</td>
+                      <td><b>Clock</td>
+                      <td><b>Value</td>
+                      <td><b>Dist(ft)</td>
+                      <td><b>Result</td>
                     </tr>
                     <tr ng-repeat="shot in shots">
                       <td>{{ shot.PERIOD }}</td>
                       <td>{{ shot.GAME_CLOCK }}</td>
                       <td>{{ shot.PTS_TYPE }}</td>
                       <td>{{ shot.SHOT_DIST}}</td>
-                      <td> <a href="" ng-click="setShotVideoUrl(shot)">{{ shot.SHOT_RESULT }}</a> </td>
+                      <td>
+                        <a href="" ng-click="showVideo(shot)">{{ shot.SHOT_RESULT }}</a> 
+                      </td>
                     </tr>
                   </table>
                 </div>

@@ -86,7 +86,6 @@ nbaOneOnOneApp.service('nbaAPI', function($http, formatAPIResults){
             var groupedShotsByGame = _.groupBy(shotObjects, function(shotObject) {
                 return shotObject.MATCHUP;
             })
-            //console.log('groupedShotsByGame', groupedShotsByGame);
             return groupedShotsByGame;
         },
 
@@ -96,7 +95,6 @@ nbaOneOnOneApp.service('nbaAPI', function($http, formatAPIResults){
         },
 
         getGamePlayByPlay: function(gameID) {
-            console.log('gameID', gameID);
             var gamePlayByPlayUrl = "http://stats.nba.com/stats/playbyplayv2?EndPeriod=10" + 
             "&EndRange=55800&RangeType=2&Season=2014-15&SeasonType=Regular+Season" +
             "&StartPeriod=1&StartRange=0&callback=JSON_CALLBACK&GameID=" + gameID;
@@ -142,6 +140,7 @@ nbaOneOnOneApp.controller('oneOnOneController', function ($scope, nbaAPI, $modal
         $scope.offensivePlayer = {};
         $scope.defensivePlayer = {};
         $scope.gamePlayByPlays = {};
+        $scope.shotsLoaded = false;
     };
     
     //initialize
@@ -166,45 +165,55 @@ nbaOneOnOneApp.controller('oneOnOneController', function ($scope, nbaAPI, $modal
     $scope.$watch('playerOne.selected', function(val) {
         if (val) {
             $scope.searchResultPlayerObjects = $scope.eligiblePlayerObjects;
+            $scope.shotsLoaded = false;
         }
     })
 
     $scope.$watch('playerTwo.selected', function(val) {
         if (val) {
             $scope.searchResultPlayerObjects = $scope.eligiblePlayerObjects;
+            $scope.shotsLoaded = false;
         }
     })
 
     $scope.getShots = function() {
+        $scope.shotsLoaded = false;
+        $scope.shotsLoading = true;
         $scope.offensivePlayer = $scope.playerOne.selected;
         $scope.defensivePlayer = $scope.playerTwo.selected;
         
         nbaAPI.getShotsForPlayers($scope.offensivePlayer, $scope.defensivePlayer).then(function(result) {
-            $scope.shotsVsDefender = result;
-            $scope.shotsVsDefenderGroupedByGame = nbaAPI.getShotsForPlayersGroupedByGame($scope.shotsVsDefender);
-
+            $scope.shotsVsDefender = _.each(result, function(shot) {
+                                        $scope.calculateShotVideoUrl(shot, function(url) {
+                                            shot['videoUrl'] = url;
+                                        });
+                                    });
+            $scope.shotsLoaded = true;
+            $scope.shotsLoading = false;
         });
 
-        $scope.playsLoaded = true;
     }
 
-    $scope.setShotVideoUrl = function(shot) {
-        if (!$scope.gamePlayByPlays.hasOwnProperty(shot.GAME_ID)) {
-                nbaAPI.getGamePlayByPlay(shot.GAME_ID).then(function(result) {
-                    $scope.gamePlayByPlays[shot.GAME_ID] = result;
-                    var shotInPlayByPlay = nbaAPI.findShotInPlayByPlay(shot, $scope.gamePlayByPlays[shot.GAME_ID], $scope.offensivePlayer);
-                    console.log('shotInPlayByPlay', shotInPlayByPlay);
-                    $scope.shotVideoUrl = nbaAPI.getShotVideoUrl(shotInPlayByPlay);
-                });
+    $scope.$watchCollection('shotsVsDefender', function(newVal) {
+        if (newVal) {
+            $scope.shotsVsDefenderGroupedByGame = nbaAPI.getShotsForPlayersGroupedByGame($scope.shotsVsDefender);
         }
-        else {
+    })
+
+    $scope.calculateShotVideoUrl = function(shot, setShotAttrCallback) {
+        nbaAPI.getGamePlayByPlay(shot.GAME_ID).then(function(result) {
+            $scope.gamePlayByPlays[shot.GAME_ID] = result;
             var shotInPlayByPlay = nbaAPI.findShotInPlayByPlay(shot, $scope.gamePlayByPlays[shot.GAME_ID], $scope.offensivePlayer);
-            console.log('shotInPlayByPlay', shotInPlayByPlay);
-            $scope.shotVideoUrl = nbaAPI.getShotVideoUrl(shotInPlayByPlay);
-        }
+            var shotVideoUrl = nbaAPI.getShotVideoUrl(shotInPlayByPlay);
+            setShotAttrCallback(shotVideoUrl);
+        });
     }
 
-    $scope.openModal = function () {
+    $scope.showVideo = function(shot) {
+        $scope.openModal(shot.videoUrl);
+    }
+
+    $scope.openModal = function (iFrameUrl) {
 
         var modalInstance = $modal.open({
           windowClass: "video-modal-class",
@@ -213,26 +222,23 @@ nbaOneOnOneApp.controller('oneOnOneController', function ($scope, nbaAPI, $modal
           controller: 'ModalInstanceCtrl',
           size:'lg',
           resolve: {
-            shotUrl: function () {
-                console.log('shotVideoUrl', $scope.shotVideoUrl);
-                return $scope.shotVideoUrl;
+            iFrameUrl: function () {
+                return iFrameUrl;
             }
           }
         })
     };
-
-
-    $scope.$watch("shotVideoUrl", function(value) {
-        if (value) {
-            $scope.openModal();
-        }
-    });
-
 })
 
-nbaOneOnOneApp.controller('ModalInstanceCtrl', function ($scope, $modalInstance, $sce, shotUrl) {
+nbaOneOnOneApp.filter('fieldGoalsForGame', function() {
+    return function(shotsForGame) {
+        return 
+    }
+})
 
-  $scope.shotUrl = shotUrl;
+nbaOneOnOneApp.controller('ModalInstanceCtrl', function ($scope, $modalInstance, $sce, iFrameUrl) {
+
+  $scope.iFrameUrl = iFrameUrl;
   console.log("in modal scope shot url", $scope.shotUrl);
   // document.getElementById('videoIFrame').src = $scope.shotUrl;
 
