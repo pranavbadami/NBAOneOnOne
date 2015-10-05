@@ -1,13 +1,24 @@
 .top-buffer { 
 	margin-top:20px; 
 }
+.btn-block+.btn-block {
+	margin-top:0px;
+}
 
 div.video-modal-class .modal-body {
-    height: 500px;
+    height: 400px;
 }
 
 label .custom-vertical {
     display: block;
     padding-left: 15px;
     text-indent: -15px;
+}
+
+.btn-circle {
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  font-size: 12px;
+  border-radius: 15px;
 }

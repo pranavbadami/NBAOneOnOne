@@ -4,6 +4,7 @@
   <head>
     <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-route.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-sanitize.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
@@ -18,12 +19,14 @@
     
     <script type="text/ng-template" id="myModalContent.html">
         <div class="modal-header">
-            <h3 class="modal-title">Video</h3>
+            <h3 class="modal-title">{{offensivePlayer.DISPLAY_LAST_COMMA_FIRST}} vs {{shot.CLOSEST_DEFENDER}}, {{shot.MATCHUP}}</h3>
+            <h4>Period: {{shot.PERIOD}} | Clock: {{shot.GAME_CLOCK}} | Distance: {{shot.SHOT_DIST}} ft | {{shot.SHOT_RESULT}}</h4>
         </div>
         <div class="modal-body">
-            <iframe width="100%" style="position: absolute; height: 100%; border: none" ng-src="{{trustAsResourceUrl(iFrameUrl)}}"></iframe>  
+            <iframe style="height: 400px; border: none; width:100%" ng-src="{{trustAsResourceUrl(iFrameUrl)}}"></iframe>  
         </div>
         <div class="modal-footer">
+            
             <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
         </div>
     </script>
@@ -59,7 +62,9 @@
       <div class="row top-buffer">
         <div class="col-sm-6 col-sm-offset-3" align="center">
           <button type="button" class="btn btn-default" ng-click="switchMatchup()" ng-show="playerOne.selected && playerTwo.selected">Switch Matchup</button>
-          <button type="button" class="btn btn-disabled" ng-click="switchMatchup()" ng-hide="playerOne.selected && playerTwo.selected">Switch Matchup</button>
+          <button type="button" class="btn btn-disabled" ng-hide="playerOne.selected && playerTwo.selected">Switch Matchup</button>
+          <button type="button" class="btn btn-default" ng-click="getShareableLink()" ng-show="playerOne.selected && playerTwo.selected">Shareable Link</button>
+          <button type="button" class="btn btn-disabled" ng-hide="playerOne.selected && playerTwo.selected">Share Matchup</button>
         </div>
       </div>
     </div>
@@ -79,8 +84,8 @@
       </div>
     </div>
 
-    <div class="container-fluid" ng-show="eligiblePlayersLoaded">
-      <div class="row">
+    <div class="container" ng-show="eligiblePlayersLoaded">
+      <div class="row top-buffer">
         <div class="col-sm-6 col-sm-offset-3">
           <button type="button" class="btn btn-primary btn-block" ng-show="playerOne.selected && playerTwo.selected && verifySeasonSelected() && !shotsLoading && !shotsLoaded" ng-click="getShots()">Show shots</button>
           <button type="button" class="btn btn-primary btn-block disabled" ng-show="playerOne.selected && playerTwo.selected && shotsLoading && !shotsLoaded">Loading shots</button>
@@ -99,8 +104,13 @@
       <div class="row top-buffer">
         <div class="col-sm-6 col-sm-offset-3">
           <accordion>
-            <accordion-group ng-repeat="(matchup, shots) in shotsVsDefenderGroupedByGame" heading="{{matchup}}
-            {{shots | numberMadeShots}} for {{shots.length}} ({{shots | percentageMadeShots}}%)">
+            <accordion-group ng-repeat="(matchup, shots) in shotsVsDefenderGroupedByGame">
+              <accordion-heading>
+                <button class="btn-default">+</button> {{matchup}}
+                {{shots | numberMadeShots}} for {{shots.length}} ({{shots | percentageMadeShots}}%)
+
+              </accordion-heading>
+              <span ng-show="isErrorGame(matchup)">Due to inconsistencies in the NBA stat counting, some videos for this game may be incorrect. The vast majority of games do not have any inconsistencies.</span>
                <div class="table-responsive">
                   <table class="table">
                     <tr>
@@ -116,7 +126,7 @@
                       <td>{{ shot.PTS_TYPE }}</td>
                       <td>{{ shot.SHOT_DIST}}</td>
                       <td>
-                        <a href="" ng-click="showVideo(shot)">{{ shot.SHOT_RESULT }}</a> 
+                        {{ shot.SHOT_RESULT }} | <a href="" ng-click="showVideo(shot)">VIDEO</a> 
                       </td>
                     </tr>
                   </table>
