@@ -88,9 +88,9 @@
           </div>
         </div>
         <div class="col-sm-3">
-          <div ng-repeat="seasonType in seasonTypes">
-              <label class="custom-vertical visible-md-block visible-lg-block"><input type="radio" ng-model="$parent.selectedSeasonType" ng-value="seasonType"> {{seasonType}}</label>
-              <label align="center" class="visible-xs-block visible-sm-block"><input type="radio" ng-model="$parent.selectedSeasonType" ng-value="seasonType"> {{seasonType}}</label>
+          <div ng-repeat="(seasonType, selected) in seasonTypes">
+              <label class="custom-vertical visible-md-block visible-lg-block"><input type="checkbox" ng-model="seasonTypes[seasonType]"> {{seasonType}}</label>
+              <label align="center" class="visible-xs-block visible-sm-block"><input type="checkbox" ng-model="seasonTypes[seasonType]"> {{seasonType}}</label>
           </div>
         </div>
       </div>
