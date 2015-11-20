@@ -108,7 +108,7 @@
     </div>
 
     <div ng-show="shotsLoaded" class="container-fluid">
-      <div class="row top-buffer" ng-hide="shotsVsDefender.length">
+      <div class="row top-buffer" ng-hide="shotsVsDefender.length && !shotsLoading">
         <h3 align="center">No shots found :/</h3>
         <h5 align="center">Players at the same position work best</h5>
       </div>
